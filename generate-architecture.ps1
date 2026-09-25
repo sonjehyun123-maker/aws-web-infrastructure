@@ -107,7 +107,7 @@ $g.DrawString("Nginx (Port 80 Running)", $fontSub, $textGreen, 570, 490)
 $g.DrawString("Status:", $fontBold, $textWhite, 485, 520)
 $g.DrawString("200 OK /health", $fontBold, $textGreen, 570, 520)
 
-$targetPath = Join-Path (Get-Location) "docs\architecture.png"
+$targetPath = Join-Path (Get-Location) "docs\images\architecture.png"
 $bmp.Save($targetPath, [System.Drawing.Imaging.ImageFormat]::Png)
 $bmp.Dispose()
 $g.Dispose()

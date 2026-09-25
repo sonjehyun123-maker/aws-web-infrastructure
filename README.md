@@ -29,10 +29,10 @@
 ### 외부 접속 증빙 스크린샷
 
 #### (A) 웹 서비스 메인 화면 접속 검증 (http://3.34.42.120)
-![외부 웹 접속 증빙](./docs/proof-web.png)
+![외부 웹 접속 증빙](./docs/images/proof-web.png)
 
 #### (B) 헬스 체크 엔드포인트 응답 검증 (http://3.34.42.120/health)
-![헬스 체크 증빙](./docs/proof-health.png)
+![헬스 체크 증빙](./docs/images/proof-health.png)
 
 ---
 
@@ -53,7 +53,7 @@
 
 본 인프라의 트래픽 통신 흐름과 리소스 배치 구조는 다음과 같습니다.
 
-![아키텍처 다이어그램](./docs/architecture.png)
+![아키텍처 다이어그램](./docs/images/architecture.png)
 
 ### 4.1 외부 트래픽 및 네트워크 관문
 - **인터넷 사용자 및 트래픽 (External Traffic)**: 외부 사용자는 웹 브라우징을 위한 HTTP(포트 80) 또는 서버 접속/관리를 위한 SSH(포트 22) 프로토콜을 통해 접근합니다.
@@ -80,19 +80,19 @@
 ## 5. 단계별 AWS 콘솔 구성 증빙 갤러리
 
 ### 1) VPC 생성 결과 화면
-![VPC 구성](./docs/aws-vpc.png)
+![VPC 구성](./docs/images/aws-vpc.png)
 
 ### 2) Public Subnet 구성 화면
-![Subnet 구성](./docs/aws-subnet.png)
+![Subnet 구성](./docs/images/aws-subnet.png)
 
 ### 3) Internet Gateway 연결 상태 화면
-![IGW 구성](./docs/aws-igw.png)
+![IGW 구성](./docs/images/aws-igw.png)
 
 ### 4) Route Table 라우팅 경로 설정 화면
-![Route Table 구성](./docs/aws-routetable.png)
+![Route Table 구성](./docs/images/aws-routetable.png)
 
 ### 5) EC2 인스턴스 실행 및 상태 검사 화면
-![EC2 구성](./docs/aws-ec2.png)
+![EC2 구성](./docs/images/aws-ec2.png)
 
 ---
 
@@ -102,7 +102,7 @@
 
 - **학습 가이드 문서**: [`LEARNING_GUIDE.md`](./LEARNING_GUIDE.md) (네트워크/보안 개념, 패킷 흐름, 구축 절차 정리)
 - **아키텍처 분석서**: [`docs/architecture-spec.md`](./docs/architecture-spec.md) (아키텍처 다이어그램 및 리소스 세부 분석서)
-- **아키텍처 다이어그램**: [`docs/architecture.png`](./docs/architecture.png) (시스템 아키텍처 다이어그램 이미지)
+- **아키텍처 다이어그램**: [`docs/images/architecture.png`](./docs/images/architecture.png) (시스템 아키텍처 다이어그램 이미지)
 - **트러블슈팅 보고서**: [`docs/troubleshooting.md`](./docs/troubleshooting.md) (SCP 권한 거부 및 부팅 락 장애 해결 보고서)
 - **리소스 정리 체크리스트**: [`docs/cleanup-checklist.md`](./docs/cleanup-checklist.md) (과금 방지를 위한 리소스 삭제 완료 증빙 및 절차)
 
