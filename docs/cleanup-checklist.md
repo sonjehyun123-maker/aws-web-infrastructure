@@ -5,7 +5,6 @@
 ---
 
 ## 1. 생성 리소스 추적 및 정리 이력 관리표
-
 | 리소스 구분 | 생성된 Resource ID | 정리 상태 | 삭제 수행 방법 및 비고 |
 | :--- | :--- | :---: | :--- |
 | **EC2 인스턴스** | `i-0760f0f6d6352c5ed` | 완료 | EC2 인스턴스 Terminate(종료) 완료 |
@@ -16,9 +15,7 @@
 | **Internet Gateway**| `igw-08725917d1b9eb4b0` | 완료 | VPC에서 Detach 후 IGW 삭제 완료 |
 | **Public Subnet** | `subnet-0a319c0f06c2b88cc` | 완료 | Subnet 삭제 완료 |
 | **VPC** | `vpc-00dc9a5671c96f5c5` | 완료 | 하위 리소스 해제 후 VPC 최종 삭제 완료 (`Vpcs: []` 확인) |
-
 ---
-
 ## 2. CLI 기반 리소스 정리 수행 스크립트 (실행 내역)
 
 자원 간 의존성을 고려하여 아래 순서대로 삭제를 진행하였습니다.
@@ -31,12 +28,10 @@ aws ec2 wait instance-terminated --instance-ids i-0760f0f6d6352c5ed --region ap-
 # 2. Key Pair 및 Security Group 삭제
 aws ec2 delete-key-pair --key-name mission-key --region ap-northeast-2
 aws ec2 delete-security-group --group-id sg-046612d8c8902fcae --region ap-northeast-2
-
 # 3. Route Table 연동 해제 및 삭제
 $ASSOC_ID = (aws ec2 describe-route-tables --route-table-ids rtb-04591059288768592 --query 'RouteTables[0].Associations[0].RouteTableAssociationId' --output text --region ap-northeast-2)
 aws ec2 disassociate-route-table --association-id $ASSOC_ID --region ap-northeast-2
 aws ec2 delete-route-table --route-table-id rtb-04591059288768592 --region ap-northeast-2
-
 # 4. Internet Gateway Detach 및 삭제
 aws ec2 detach-internet-gateway --internet-gateway-id igw-08725917d1b9eb4b0 --vpc-id vpc-00dc9a5671c96f5c5 --region ap-northeast-2
 aws ec2 delete-internet-gateway --internet-gateway-id igw-08725917d1b9eb4b0 --region ap-northeast-2
@@ -47,6 +42,37 @@ aws ec2 delete-vpc --vpc-id vpc-00dc9a5671c96f5c5 --region ap-northeast-2
 ```
 
 ---
-
 ## 3. 과금(Billing) 최종 검증
 - AWS Management Console ➔ **Billing & Cost Management Dashboard**에 접속하여 예상 청구 금액이 `$0.00`로 유지되고 미사용 자원이 잔존하지 않음을 최종 검증하였습니다.
+
+---
+
+## 추가 정리 확인
+
+### Elastic IP 확인
+
+EC2 종료와 별개로 Elastic IP가 남아 있는지 확인합니다.
+
+```powershell
+aws ec2 describe-addresses --region ap-northeast-2 `
+  --query "Addresses[*].{AllocationId:AllocationId,PublicIp:PublicIp,AssociationId:AssociationId}"
+```
+
+사용하지 않는 Elastic IP가 있고 `AssociationId`가 없다면 Release합니다.
+
+```powershell
+aws ec2 release-address --allocation-id <ALLOCATION_ID> --region ap-northeast-2
+```
+
+본 실습에서 Elastic IP를 별도로 사용하지 않았다면 미사용 EIP가 남아 있지 않은지 확인하는 것으로 마무리합니다.
+
+### 잔여 비용 리소스 확인
+
+최종적으로 다음 리소스가 남아 있지 않은지 확인합니다.
+
+- EBS
+- Elastic IP
+- Load Balancer
+- NAT Gateway
+- 기타 실습 중 생성한 리소스
+
