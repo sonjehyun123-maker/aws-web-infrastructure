@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AWS Web Infrastructure Architecture Diagram</title>
+<style>
+  body { font-family: Arial, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
+  .diagram-container { border: 2px solid #334155; border-radius: 16px; padding: 30px; background-color: #1e293b; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 850px; }
+  h1 { text-align: center; color: #38bdf8; font-size: 24px; margin-bottom: 20px; }
+  .vpc-box { border: 2px dashed #38bdf8; border-radius: 12px; padding: 20px; background-color: rgba(56, 189, 248, 0.05); position: relative; margin-top: 40px; }
+  .vpc-title { position: absolute; top: -14px; left: 20px; background-color: #38bdf8; color: #0f172a; font-weight: bold; padding: 2px 12px; border-radius: 6px; font-size: 14px; }
+  .igw-box { border: 2px solid #f59e0b; border-radius: 8px; padding: 12px; background-color: rgba(245, 158, 11, 0.1); text-align: center; width: 220px; margin: 0 auto 25px auto; color: #fbbf24; font-weight: bold; }
+  .subnet-box { border: 2px dashed #4ade80; border-radius: 10px; padding: 20px; background-color: rgba(74, 222, 128, 0.05); position: relative; margin-top: 15px; }
+  .subnet-title { position: absolute; top: -12px; left: 20px; background-color: #4ade80; color: #0f172a; font-weight: bold; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
+  .flow-arrow { text-align: center; font-size: 20px; color: #fbbf24; margin: 8px 0; font-weight: bold; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+  .card { border: 1px solid #475569; border-radius: 8px; padding: 15px; background-color: #0f172a; }
+  .card-title { font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #cbd5e1; border-bottom: 1px solid #334155; padding-bottom: 4px; }
+  .ec2-card { border: 2px solid #a855f7; background-color: rgba(168, 85, 247, 0.1); }
+  .ec2-title { color: #c084fc; font-weight: bold; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; margin-right: 5px; font-weight: bold; }
+  .badge-http { background-color: #0284c7; color: white; }
+  .badge-ssh { background-color: #e11d48; color: white; }
+</style>
+</head>
+<body>
+<div class="diagram-container">
+  <h1>🌐 AWS 웹 서비스 시스템 아키텍처 다이어그램</h1>
+  
+  <div style="text-align: center; margin-bottom: 15px;">
+    <span style="border: 1px solid #94a3b8; padding: 8px 16px; border-radius: 20px; color: #e2e8f0; background: #334155;">
+      ☁️ Internet User / Client Traffic (External)
+    </span>
+  </div>
+
+  <div class="flow-arrow">⬇️ HTTP (80) / SSH (22)</div>
+
+  <div class="vpc-box">
+    <div class="vpc-title">Mission-VPC (10.0.0.0/16) - ap-northeast-2</div>
+    
+    <div class="igw-box">
+      🌐 Internet Gateway<br><span style="font-size: 11px; font-weight: normal;">(igw-08725917d1b9eb4b0)</span>
+    </div>
+
+    <div class="flow-arrow">⬇️ Route Table (0.0.0.0/0 ➔ IGW)</div>
+
+    <div class="subnet-box">
+      <div class="subnet-title">Public Subnet (10.0.1.0/24) - subnet-0a319c0f06c2b88cc</div>
+      
+      <div class="grid">
+        <div class="card">
+          <div class="card-title">🛡️ Security Group (Mission-Web-SG)</div>
+          <p style="font-size: 12px; margin: 4px 0;"><span class="badge badge-http">HTTP 80</span> Source: <code>0.0.0.0/0</code> (Public)</p>
+          <p style="font-size: 12px; margin: 4px 0;"><span class="badge badge-ssh">SSH 22</span> Source: <code>211.209.211.121/32</code> (My IP)</p>
+        </div>
+
+        <div class="card ec2-card">
+          <div class="card-title ec2-title">💻 EC2 Instance (Mission-Web-Server)</div>
+          <p style="font-size: 12px; margin: 3px 0;"><b>Instance ID:</b> i-0760f0f6d6352c5ed</p>
+          <p style="font-size: 12px; margin: 3px 0;"><b>Instance Type:</b> t3.micro (Ubuntu 22.04)</p>
+          <p style="font-size: 12px; margin: 3px 0;"><b>Public IP:</b> <code>3.34.42.120</code></p>
+          <p style="font-size: 12px; margin: 3px 0;"><b>Web Application:</b> Nginx Web Server (Port 80)</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
