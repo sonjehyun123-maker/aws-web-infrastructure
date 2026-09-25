@@ -2,6 +2,8 @@
 
 본 프로젝트는 AWS 프리티어 환경에서 VPC, Subnet, Internet Gateway, Security Group 및 EC2(Nginx) 기반의 기본 웹 인프라를 구축하고 외부 접속을 검증한 결과를 담고 있습니다.
 
+---
+
 ## 1. 외부 접속 증빙
 - **접속 검증 방식**:
   - (A) 브라우저 접속: `http://3.34.42.120` ➔ `200 OK`
@@ -54,3 +56,17 @@
 
 ### 5) EC2 인스턴스 실행 증빙 (`Mission-Web-Server`)
 ![EC2 구성](./docs/aws-ec2.png)
+
+---
+
+## 🧹 5. 실습 리소스 정리 및 삭제 완료 증빙
+
+과금 방지 및 안전한 리소스 관리를 위해 실습 종료 후 생성된 모든 AWS 인프라 리소스를 정상 삭제 처리하였습니다.
+
+- **EC2 Instance (`i-0760f0f6d6352c5ed`)**: `Terminated` (종료 완료)
+- **Key Pair (`mission-key`)**: Deleted (삭제 완료)
+- **Security Group (`sg-046612d8c8902fcae`)**: Deleted (삭제 완료)
+- **Route Table (`rtb-04591059288768592`)**: Deleted (삭제 완료)
+- **Internet Gateway (`igw-08725917d1b9eb4b0`)**: Detached & Deleted (삭제 완료)
+- **Public Subnet (`subnet-0a319c0f06c2b88cc`)**: Deleted (삭제 완료)
+- **VPC (`vpc-00dc9a5671c96f5c5`)**: Deleted (삭제 완료, `Vpcs: []` 조회를 통해 확인)
