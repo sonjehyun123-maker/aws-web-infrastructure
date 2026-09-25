@@ -1,61 +1,62 @@
 # 트러블슈팅 보고서 (Troubleshooting Report)
 
-본 보고서는 AWS 클라우드 웹 인프라 구축 과정에서 발생한 실제 오류 및 이슈에 대해 원인을 분석하고 해결한 과정을 기록한 문서입니다.
+본 보고서는 AWS 클라우드 웹 인프라 구축 실습 중 실제로 경험한 2가지 기술적 문제 상황에 대해 원인을 파악하고 해결한 과정을 6단계 정식 프레임워크에 맞춰 작성한 문서입니다.
 
 ---
 
-## Case 1. AWS IAM / Organization SCP (Service Control Policy) 권한 거부 오류
+## 사례 1. AWS IAM 및 상위 계정 조직 정책(SCP) 권한 거부 오류
 
 ### 1. 증상 (Problem Statement)
-- AWS CLI를 통한 VPC 및 EC2 생성 명령어 실행 시 `UnauthorizedOperation` 및 `explicit deny in a service control policy` 오류가 발생함.
+- AWS CLI를 이용하여 VPC(`create-vpc`), 태그 생성(`create-tags`), 이미지 조회(`describe-images`) 명령어를 실행하였으나 `UnauthorizedOperation` 및 `explicit deny in a service control policy` 오류 메시지가 반환되며 작성이 차단됨.
 ```text
-An error occurred (UnauthorizedOperation) when calling the CreateVpc operation: You are not authorized to perform this operation. User: arn:aws:iam::952376465187:user/son-admin is not authorized to perform: ec2:CreateVpc with an explicit deny in a service control policy: arn:aws:organizations::.../p-4fisx83d
+An error occurred (UnauthorizedOperation) when calling the CreateVpc operation: You are not authorized to perform this operation. User: arn:aws:iam::952376465187:user/son-admin is not authorized to perform: ec2:CreateVpc with an explicit deny in a service control policy: arn:aws:organizations::.../policy/service_control_policy/p-4fisx83d
 ```
 
 ### 2. 원인 가설 (Hypothesis)
-- 실습 계정이 속한 상위 AWS Organization의 SCP(서비스 제어 정책)에서 IAM 사용자의 네트워크 리소스(`CreateVpc`, `CreateInternetGateway`, `CreateTags`) 생성을 차단하고 있음.
+- 실습에 처음 사용한 계정(`952376465187`)이 특정 기관/기업의 AWS Organization에 소속되어 있으며, 상위 관리자가 서비스 제어 정책(SCP: Service Control Policy)을 통해 일반 IAM 사용자의 신규 VPC 및 EC2 관련 생성 권한을 명시적으로 거부(Explicit Deny)해 놓은 상태임.
 
 ### 3. 검증 방법 (Verification)
-- `aws sts get-caller-identity`로 현재 IAM 계정 및 조직 소속 계정 확인.
-- `aws ec2 describe-vpcs` 실행 결과 조직 차원의 `explicit deny` 거부 응답 수신 확인.
+- `aws sts get-caller-identity` 명령을 실행하여 소속 IAM ARN과 계정 ID를 조회함.
+- `aws ec2 describe-vpcs` 명령을 실행하여 명시적 거부(Explicit Deny) 응답을 수신하고 IAM 권한 추가만으로는 해결할 수 없는 상위 SCP 차단 정책임을 검증함.
 
 ### 4. 조치 내용 (Remediation)
-- SCP 제약이 적용되지 않은 독립 개인 프리티어 계정(`751479507314`, IAM 사용자 `SON-6-1`)으로 교체.
-- `aws configure`를 통해 새로운 계정의 Access Key ID 및 Secret Access Key 재설정 및 인증 완료.
+- 상위 조직 정책의 영향을 받지 않는 독립된 개인 AWS 프리티어 계정(`751479507314`, IAM 사용자 `SON-6-1`)으로 전환함.
+- `AmazonEC2FullAccess` 정책이 부여된 새로운 계정의 Access Key ID 및 Secret Access Key를 발급받아 `aws configure`에 재등록함.
 
 ### 5. 결과 (Outcome)
-- `Mission-VPC`, `Mission-Public-Subnet`, `Mission-IGW`, `Mission-RouteTable`, `Mission-Web-SG` 및 EC2 인스턴스가 100% 정상 생성됨.
+- `aws sts get-caller-identity` 결과가 신규 계정으로 변경되었으며, `Mission-VPC`, `Mission-Public-Subnet`, `Mission-IGW`, `Mission-RouteTable`, `Mission-Web-SG` 및 EC2 인스턴스가 아무런 오류 없이 100% 정상 생성됨.
 
 ### 6. 재발 방지 (Prevention)
-- AWS 실습 시 상위 계정의 SCP 정책 유무를 사전에 체크(`sts get-caller-identity` 및 pre-flight permission check)하는 절차를 체크리스트에 추가.
+- 새로운 AWS 계정에서 실습을 진행하기 전, 상위 SCP 제한 여부를 확인하는 자격 증명 사정 점검(Pre-flight Check) 절차를 구축 가이드에 포함함.
 
 ---
 
-## Case 2. EC2 생성 직후 외부 HTTP (80) 접속 타임아웃 / 응답 실패
+## 사례 2. EC2 부팅 직후 패키지 락으로 인한 Nginx 웹 서버 접속 지연 오류
 
 ### 1. 증상 (Problem Statement)
-- EC2 인스턴스(`i-0760f0f6d6352c5ed`)가 `running` 상태이고 보안 그룹 80 포트가 `0.0.0.0/0`으로 허용되어 있음에도, `curl http://3.34.42.120` 요청 시 접속 불가 또는 `WebCmdletWebResponseException` 발생.
+- EC2 인스턴스(`i-0760f0f6d6352c5ed`) 생성이 완료되어 상태가 `running`이고 보안 그룹 80번 포트가 개방되어 있음에도, 퍼블릭 IP `http://3.34.42.120`으로 HTTP 요청 시 접속이 수 분간 타임아웃되거나 응답을 받지 못함.
 
 ### 2. 원인 가설 (Hypothesis)
-- 가설 A: Nginx 서비스가 아직 설치/실행되지 않음 (Ubuntu boot 초기화 과정에서 `unattended-upgrades` 백그라운드 프로세스가 apt-get lock을 점유하여 UserData 스크립트 실행 지연).
-- 가설 B: Subnet의 Route Table에 Internet Gateway(0.0.0.0/0 -> IGW) 경로 연결 누락.
+- Ubuntu 22.04 LTS 최신 AMI의 초기 부팅 시 시스템 자동 업데이트 프로세스(`unattended-upgrades`)가 백그라운드에서 백그라운드 락(`/var/lib/dpkg/lock-frontend`)을 점유함에 따라 UserData로 전달된 `apt-get install -y nginx` 명령어 실행이 지연되었을 가능성.
 
 ### 3. 검증 방법 (Verification)
-- SSH 키(`mission-key.pem`)를 이용해 인스턴스에 접속: `ssh -i mission-key.pem ubuntu@3.34.42.120`
-- Nginx 상태 점검: `sudo systemctl status nginx` ➔ `Unit nginx.service could not be found` 확인.
-- `cloud-init` 로그 점검: `/var/log/cloud-init-output.log` 확인 결과 apt 패키지 락 대기 상태 확인.
+- 발급된 SSH 키(`mission-key.pem`)를 활용하여 인스턴스에 직접 접속함: `ssh -i mission-key.pem ubuntu@3.34.42.120`
+- Nginx 서비스 작동 상태 조회: `sudo systemctl status nginx` ➔ `Unit nginx.service could not be found` 확인.
+- 부팅 실행 로그 점검: `/var/log/cloud-init-output.log` 파일의 하단 로그를 조회하여 패키지 설치 대기 상태를 확인함.
 
 ### 4. 조치 내용 (Remediation)
-- SSH 접속을 통해 Nginx 패키지를 수동으로 즉시 설치 및 서비스 활성화:
+- SSH 세션에서 Nginx 패키지를 수동으로 설치하고 웹 서버 서비스를 활성화함:
   ```bash
   sudo apt-get update -y && sudo apt-get install -y nginx
   sudo systemctl restart nginx
   echo "OK" | sudo tee /var/www/html/health
+  echo "<h1>Welcome to AWS Web Infrastructure Mission!</h1><p>Status: 200 OK</p>" | sudo tee /var/www/html/index.html
   ```
 
 ### 5. 결과 (Outcome)
-- `http://3.34.42.120` ➔ `200 OK` 정상 응답 수신.
-- `http://3.34.42.120/health` ➔ `OK` 헬스체크 정상 응답 확인.
+- 로컬 및 외부 웹 브라우저 접속 검증:
+  - `http://3.34.42.120` ➔ `HTTP 200 OK` 정상 응답 수신.
+  - `http://3.34.42.120/health` ➔ `OK` (HTTP 200 OK) 헬스 체크 정상 응답 수신.
 
 ### 6. 재발 방지 (Prevention)
-- EC2 UserData 작성 시 패키지 락 대기 방지 로직(`systemctl stop unattended-upgrades` 또는 수동 패키지 검증)을 배포 스크립트에 반영.
+- EC2 인스턴스 자동화 배포 시 UserData 스크립트 시작 부분에 부팅 시 패키지 락 대기를 방지하는 사전 처리 명령을 추가하거나 배포 후 서비스 헬스 체크 루틴을 의무화함.
