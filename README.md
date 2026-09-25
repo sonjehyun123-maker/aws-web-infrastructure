@@ -21,7 +21,9 @@
 
 ## 2. 제출 문서 목록
 - 📘 [학습 가이드 문서](./LEARNING_GUIDE.md)
-- 📐 [아키텍처 다이어그램](./docs/architecture.html)
+- 📐 [아키텍처 다이어그램](./docs/architecture.png)
+
+![아키텍처 다이어그램](./docs/architecture.png)
 - 🛠️ [트러블슈팅 보고서](./docs/troubleshooting.md)
 - 🧹 [리소스 정리 체크리스트](./docs/cleanup-checklist.md)
 
